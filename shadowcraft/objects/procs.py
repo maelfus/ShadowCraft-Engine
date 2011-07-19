@@ -96,13 +96,15 @@ class ProcsList(object):
     def __init__(self, *args):
         for arg in args:
             if arg in self.allowed_procs:
-                setattr(self, arg, Proc(**self.allowed_procs[arg]))
+                setattr(self, arg, None)
             else:
-                # Throw invalid input exception here
                 raise InvalidProcException(_('No data for proc {proc}').format(proc=arg))
 
-    def set_proc(self, proc):
-        setattr(self, proc, Proc(**self.allowed_procs[proc]))
+    def __setattr__(self, name, value):
+        if name in self.allowed_procs:
+            object.__setattr__(self, name, Proc(**self.allowed_procs[name]))
+        else:
+            object.__setattr__(self, name, value)
 
     def __getattr__(self, proc):
         # Any proc we haven't assigned a value to, we don't have.

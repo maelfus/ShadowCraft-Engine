@@ -40,6 +40,17 @@ class RogueDamageCalculator(DamageCalculator):
     default_ep_stats = ['white_hit', 'spell_hit', 'yellow_hit', 'str', 'agi', 'haste',
         'crit', 'mastery', 'dodge_exp']
     normalize_ep_stat = 'ap'
+    not_modeled_talents = ['deadly_momentum', 'quickening', 'blackjack',
+        'deadly_brew', 'deadened_nerves', 'improved_expose_armor',
+        'improved_recuperate', 'improved_sprint', 'improved_kick',
+        'reinforced_leather', 'improved_gouge', 'blade_twisting', 'throwing_specialization',
+        'nightstalker', 'waylay',
+        'enveloping_shadows', 'cheat_death']
+    default_glyphs = ['mutilate', 'vendetta', 'rupture', 'backstab',
+        'tricks_of_the_trade', 'revealing_strike', 'killing_spree',
+        'slice_and_dice', 'eviscerate', 'adrenaline_rush', 'shadow_dance',
+        'hemorrhage', 'sinister_strike']
+        # 'blade_flurry', 'expose_armor' may lead to dps but are not yet modeled
 
     def __setattr__(self, name, value):
         object.__setattr__(self, name, value)

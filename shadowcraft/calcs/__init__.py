@@ -28,11 +28,16 @@ class DamageCalculator(object):
     GLANCE_RATE = .24
     GLANCE_MULTIPLIER = .75
 
-    # Override this in your class specfic subclass to list appropriate stats
-    # possible values are agi, str, spi, int, white_hit, spell_hit, yellow_hit,
+    # Override these in your class specific subclass to list appropriate stats,
+    # glyphs and talents. See usage in the Rogue subclass.
+    # Possible stats are agi, str, spi, int, white_hit, spell_hit, yellow_hit,
     # haste, crit, mastery, dodge_exp, parry_exp, oh_dodge_exp, mh_dodge_exp,
     # oh_parry_exp, mh_parry_exp
     default_ep_stats = []
+    default_talents = None
+    default_glyphs = None
+    not_modeled_talents = []
+    not_modeled_glyphs = []
     # normalize_ep_stat is the stat with value 1 EP, override in your subclass
     normalize_ep_stat = None
 
@@ -130,7 +135,7 @@ class DamageCalculator(object):
                     new_dps = self.get_dps()
                     if new_dps != no_enchant_dps:
                         ep = abs(new_dps - no_enchant_dps) / (no_enchant_normalize_dps - no_enchant_dps)
-                        ep_values[hand + '_' + enchant] = ep
+                        ep_values['_'.join((hand, enchant))] = ep
                     getattr(self.stats, hand).set_enchant(old_enchant)
 
             # Weapon speed EP
@@ -160,15 +165,12 @@ class DamageCalculator(object):
         baseline_dps = self.get_dps()
         normalize_dps = self.ep_helper(normalize_ep_stat)
 
-        procs_list = []
-        gear_buffs_list = []
-        for i in list:
-            if i in self.stats.procs.allowed_procs:
-                procs_list.append(i)
-            elif i in self.stats.gear_buffs.allowed_buffs:
-                gear_buffs_list.append(i)
-            else:
-                ep_values[i] = _('not allowed')
+        procs_list = [i for i in list if i in self.stats.procs.allowed_procs]
+        gear_buffs_list = [i for i in list if i in self.stats.gear_buffs.allowed_buffs]
+
+        unallowed_list = [i for i in list if i not in procs_list + gear_buffs_list]
+        for i in unallowed_list:
+            ep_values[i] = _('not allowed')
 
         for i in gear_buffs_list:
             # Note that activated abilites like trinkets, potions, or
@@ -183,13 +185,13 @@ class DamageCalculator(object):
                 if getattr(self.stats.procs, i):
                     delattr(self.stats.procs, i)
                 else:
-                    self.stats.procs.set_proc(i)
+                    setattr(self.stats.procs, i, True)
                 new_dps = self.get_dps()
                 ep_values[i] = abs(new_dps - baseline_dps) / (normalize_dps - baseline_dps)
                 if getattr(self.stats.procs, i):
                     delattr(self.stats.procs, i)
                 else:
-                    self.stats.procs.set_proc(i)
+                    setattr(self.stats.procs, i, True)
             except InvalidProcException:
                 # Data for these procs is not complete/correct
                 ep_values[i] = _('not supported')
@@ -198,14 +200,17 @@ class DamageCalculator(object):
         return ep_values
 
     def get_glyphs_ranking(self, list=None):
-        glyphs = []
         glyphs_ranking = {}
         baseline_dps = self.get_dps()
 
-        if list == None:
+        if list is None:
             glyphs = self.glyphs.allowed_glyphs
         else:
             glyphs = list
+
+        glyphs = [i for i in glyphs if i not in self.not_modeled_glyphs]
+        if self.default_glyphs:
+            glyphs = [i for i in glyphs if i in self.default_glyphs]
 
         for i in glyphs:
             setattr(self.glyphs, i, not getattr(self.glyphs, i))
@@ -222,17 +227,21 @@ class DamageCalculator(object):
     def get_talents_ranking(self, list=None):
         talents_ranking = {}
         baseline_dps = self.get_dps()
-        talent_list = []
+
+        all_talents = self.talents.treeForTalent
+        tier_2_talents = [i for i in all_talents if self.talents.get_talent_tier(i) <= 2]
+
+        main_tree = self.talents.spec.allowed_talents.keys()
+        off_tree = [i for i in tier_2_talents if i not in main_tree]
 
         if list is None:
-        # Build a list of talents that can be taken in the active spec
-            for talent in self.talents.treeForTalent:
-                if self.talents.get_talent_tier(talent) <= 2:
-                    talent_list.append(talent)
-                elif talent in self.talents.spec.allowed_talents:
-                    talent_list.append(talent)
+            talent_list = main_tree + off_tree
         else:
             talent_list = list
+
+        talent_list = [i for i in talent_list if i not in self.not_modeled_talents]
+        if self.default_talents:
+            talent_list = [i for i in talent_list if i in self.default_talents]
 
         for talent in talent_list:
             old_talent_value = getattr(self.talents, talent)
@@ -251,15 +260,10 @@ class DamageCalculator(object):
                 talents_ranking[talent] = _('not implemented')
             self.talents.treeForTalent[talent].set_talent(talent, old_talent_value)
 
-        main_tree_talents_ranking = {}
-        off_trees_talents_ranking = {}
-        for talent in talents_ranking:
-            if talent in self.talents.spec.allowed_talents.keys():
-                main_tree_talents_ranking[talent] = talents_ranking[talent]
-            else:
-                off_trees_talents_ranking[talent] = talents_ranking[talent]
+        off_tree_ranking = dict((i, talents_ranking[i]) for i in off_tree if i in talents_ranking)
+        main_tree_ranking = dict((i, talents_ranking[i]) for i in main_tree if i in talents_ranking)
 
-        return main_tree_talents_ranking, off_trees_talents_ranking
+        return main_tree_ranking, off_tree_ranking
 
     def get_dps(self):
         # Overwrite this function with your calculations/simulations/whatever;

@@ -78,7 +78,7 @@ ep_values = calculator.get_ep()
 main_tree_talents_ranking, off_tree_talents_ranking = calculator.get_talents_ranking()
 
 # Compute glyphs ranking
-glyps_ranking = calculator.get_glyphs_ranking(['vendetta', 'backstab'])
+glyphs_ranking = calculator.get_glyphs_ranking(['vendetta', 'backstab'])
 
 # Compute EP values for procs and gear buffs
 tier_ep_values = calculator.get_other_ep(['rogue_t11_4pc', 'rogue_t11_2pc', 'rogue_t12_4pc', 'rogue_t12_2pc'])
@@ -123,7 +123,7 @@ print '-' * (max_length([trinkets_ep_value]) + 15)
 pretty_print([trinkets_ep_value])
 
 dicts_for_pretty_print = [
-    glyps_ranking,
+    glyphs_ranking,
     off_tree_talents_ranking,
     mh_enchants_and_dps_ep_values,
     oh_enchants_and_dps_ep_values,
