@@ -67,10 +67,11 @@ talents = {
     'shaman': (
         ('natures_guardian', 'stone_bulwark_totem', 'astral_shift'),
         ('frozen_power', 'earthgrab_totem', 'windwalk_totem'),
-        ('call_of_the_elements', 'totemic_restoration', 'totemic_projection'),
+        ('call_of_the_elements', 'totemic_persistence', 'totemic_projection'),
         ('elemental_mastery', 'ancestral_swiftness', 'echo_of_the_elements'),
-        ('healing_tide_totem', 'ancestral_guidance', 'conductivity'),
-        ('unleashed_fury', 'primal_elementalist', 'elemental_blast')
+        ('rushing_streams', 'ancestral_guidance', 'conductivity'),
+        ('unleashed_fury', 'primal_elementalist', 'elemental_blast'),
+        ('elemental_fusion', 'storm_elemental_totem', 'liquid_magma')
     ),
     'warlock': (
         ('dark_regeneration', 'soul_leech', 'harvest_life'),
